@@ -1,0 +1,3 @@
+aiohttp==3.7.4.post0
+tenacity==7.0.0
+Flask==2.0.1
