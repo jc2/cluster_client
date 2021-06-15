@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import argparse
 
 from node import CreateGroup, DeleteGroup, NodeActionState
 
@@ -82,6 +83,17 @@ class Coroutine():
 
 
 if __name__ == '__main__':
-    nodes = [f"http://127.0.0.1:5000/{node}" for node in range(10)]
-    c = Coroutine("create_group", nodes, "main")
+    parser = argparse.ArgumentParser(description='Cluster API: For creating groups and beyond :D')
+    parser.add_argument('action', type=str, nargs='?',  choices=['create_group', 'delete_group'],
+                        help='Action to perform: create_group or delete_group')
+    parser.add_argument('group_name', type=str, nargs='?',
+                        help='Group name')
+    parser.add_argument('node_file', nargs='?', type=argparse.FileType('r'),
+                        help="Json file with a list of string (nodes urls)")
+    args = parser.parse_args()
+
+    import json
+    nodes = json.loads(args.node_file.read())
+
+    c = Coroutine(args.action, nodes, args.group_name)
     c.run()
