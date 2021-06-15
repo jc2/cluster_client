@@ -3,3 +3,4 @@ tenacity==7.0.0
 Flask==2.0.1
 aioresponses==0.7.2
 flake8==3.9.2
+pytest==6.2.4
