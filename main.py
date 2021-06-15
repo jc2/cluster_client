@@ -1,12 +1,11 @@
 import asyncio
 import logging
-import argparse
 from enum import Enum
 
 from node import CreateGroup, DeleteGroup, NodeActionState
 
 
-logging.basicConfig(filename='script.log', format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG)
+logging.basicConfig(filename='/tmp/run.log', format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +61,6 @@ class Coroutine():
                 # 2.1 Rollback in case of errors
                 result = loop.run_until_complete(self._backward(task_to_rollback))
                 errors = [str(i.last_attempt.exception()) for i in result if isinstance(i, Exception)]
-                print(errors)
                 if errors:
                     self.status = CoroutineState.ERROR
                     logger.error(errors)
@@ -97,6 +95,10 @@ class Coroutine():
 
 
 if __name__ == '__main__':
+    import argparse
+    import json
+    import sys
+
     parser = argparse.ArgumentParser(description='Cluster API: For creating groups and beyond :D')
     parser.add_argument('action', type=str, nargs='?',  choices=['create_group', 'delete_group'],
                         help='Action to perform: create_group or delete_group')
@@ -106,8 +108,16 @@ if __name__ == '__main__':
                         help="Json file with a list of string (nodes urls)")
     args = parser.parse_args()
 
-    import json
-    nodes = json.loads(args.node_file.read())
+    try:
+        nodes = json.loads(args.node_file.read())
+    except json.decoder.JSONDecodeError:
+        sys.exit("File can not be readed")
 
-    c = Coroutine(args.action, nodes, args.group_name)
+    if not isinstance(nodes, list):
+        sys.exit("Root element must be a list")
+
+    if any([not isinstance(node, str) for node in nodes]):
+        sys.exit("Nodes must be a string")
+
+    c = Coroutine(args.action, set(nodes), args.group_name)
     c.run()
