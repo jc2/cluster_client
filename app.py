@@ -12,7 +12,7 @@ data = defaultdict(list)
 def alter_rute(f):
     def wrapper(*args, **kwargs):
         sleep(randint(1, 5))
-        if randint(0, 10) == 5:
+        if randint(0, 5) == 5:
             return "", 500
         a = f(*args, **kwargs)
         print("NUMBER OF NODES:", len({k: v for k, v in data.items() if v}))
@@ -25,12 +25,14 @@ def alter_rute(f):
 @app.route("/<node>/v1/group", methods=['POST'])
 @alter_rute
 def create_group(node):
+    if 2 == int(node):
+        return "", 500
     group = request.json.get("groupId")
-    if group not in data:
+    if group not in data[node]:
         data[node].append(group)
         return jsonify({"groupId": group}), 201
     else:
-        return "", 400
+        return "An error. Perhaps the object exists", 400
 
 
 @app.route("/<node>/v1/group", methods=['DELETE'])
@@ -50,4 +52,4 @@ def get_group(node, name):
     if name in data[node]:
         return jsonify({"groupId": name}), 200
     else:
-        return "", 404
+        return "Not Found", 404

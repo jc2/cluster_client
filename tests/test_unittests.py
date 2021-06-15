@@ -1,7 +1,6 @@
 import asyncio
 import pytest
 
-import aiohttp
 from aioresponses import aioresponses
 
 from node import NodeClient, NodeError, NodeGroupNotFound
