@@ -71,13 +71,13 @@ def test_node_delete_group():
 
     with aioresponses() as mocker:
         node = "node1.cluster.com"
-        mocker.delete(node+"/v1/group", status=201, payload={"groupId": "group_1"})
+        mocker.delete(node+"/v1/group", status=200, payload={"groupId": "group_1"})
 
         resp = loop.run_until_complete(NodeClient.delete_group(session, node, "group_1"))
         data = loop.run_until_complete(resp.json())
 
         assert data == {"groupId": "group_1"}
-        assert resp.status == 201
+        assert resp.status == 200
 
 
 def test_node_delete_group_exception():

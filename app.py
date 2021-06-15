@@ -12,10 +12,10 @@ data = defaultdict(list)
 def alter_rute(f):
     def wrapper(*args, **kwargs):
         sleep(randint(1, 5))
-        if randint(2, 3) == 3:
+        if randint(0, 10) == 5:
             return "", 500
         a = f(*args, **kwargs)
-        print("NUMBER OF NODES:", len({k: v for k, v in data.items if v}))
+        print("NUMBER OF NODES:", len({k: v for k, v in data.items() if v}))
         print("DATA:", data)
         return a
     wrapper.__name__ = f.__name__
