@@ -25,8 +25,6 @@ def alter_rute(f):
 @app.route("/<node>/v1/group", methods=['POST'])
 @alter_rute
 def create_group(node):
-    if 2 == int(node):
-        return "", 500
     group = request.json.get("groupId")
     if group not in data[node]:
         data[node].append(group)

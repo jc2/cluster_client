@@ -93,17 +93,44 @@ class CreateGroup(NodeAction):
 
 class DeleteGroup(NodeAction):
 
-    # @retry(stop=stop_after_attempt(3))
-    async def fordward(self, node, group_name):
-        return await NodeClient.delete_group(node, group_name)
+    def __init__(self, node):
+        self.node = node
+        self.status = None
 
-    # @retry(stop=stop_after_attempt(3))
-    async def backward(self, node, group_name):
-        return await NodeClient.create_group(node, group_name)
+    @retry(stop=stop_after_attempt(3), retry=retry_if_exception_type(NodeError))
+    async def fordward(self, group_name):
+        try:
+            response = await NodeClient.delete_group(self.node, group_name)
+        except NodeError as e:
+            self.status = NodeActionState.ERROR
+            raise e
+        else:
+            self.status = NodeActionState.DONE
+            return response
 
-    # @retry(stop=stop_after_attempt(3))
-    async def get_current_status(self, node, group_name):
-        return await NodeClient.get_group(node, group_name)
+    @retry(stop=stop_after_attempt(3), retry=retry_if_exception_type(NodeError))
+    async def backward(self, group_name):
+        try:
+            response = await NodeClient.create_group(self.node, group_name)
+        except NodeError as e:
+            self.status = NodeActionState.ERROR
+            raise e
+        else:
+            self.status = NodeActionState.ROLLED_BACK
+            return response
+
+    @retry(stop=stop_after_attempt(3), retry=retry_if_exception_type(NodeError))
+    async def get_current_status(self, group_name):
+        try:
+            response = await NodeClient.get_group(self.node, group_name)
+        except NodeGroupNotFound:
+            self.status = NodeActionState.NOT_NEEDED
+        except NodeError as e:
+            self.status = NodeActionState.ERROR
+            raise e
+        else:
+            self.status = NodeActionState.READY
+            return response
 
 
 class NodeClient():
