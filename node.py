@@ -15,7 +15,7 @@ class NodeAction(ABC):
         pass
 
     @abstractclassmethod
-    async def fordward(self, *args, **kwargs):
+    async def forward(self, *args, **kwargs):
         pass
 
     @abstractclassmethod
@@ -56,7 +56,7 @@ class CreateGroup(NodeAction):
         self.status = None
 
     @retry(stop=stop_after_attempt(3), retry=retry_if_exception_type(NodeError))
-    async def fordward(self, group_name):
+    async def forward(self, group_name):
         try:
             response = await NodeClient.create_group(self.node, group_name)
         except NodeError as e:
@@ -98,7 +98,7 @@ class DeleteGroup(NodeAction):
         self.status = None
 
     @retry(stop=stop_after_attempt(3), retry=retry_if_exception_type(NodeError))
-    async def fordward(self, group_name):
+    async def forward(self, group_name):
         try:
             response = await NodeClient.delete_group(self.node, group_name)
         except NodeError as e:
