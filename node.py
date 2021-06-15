@@ -1,8 +1,11 @@
 from abc import ABC, abstractclassmethod
 from enum import Enum
+import logging
 
 import aiohttp
 from tenacity import retry, stop_after_attempt, retry_if_exception_type
+
+logger = logging.getLogger(__name__)
 
 
 class NodeAction(ABC):
@@ -107,29 +110,29 @@ class NodeClient():
 
     @staticmethod
     async def create_group(node, group_name):
-        print(f"Creating on {node}")
+        logger.debug(f"Creating group {group_name} on {node}")
         async with aiohttp.ClientSession() as session:
             response = await session.post(f"{node}/v1/group", json={"groupId": group_name})
             text = await response.text()
         if not response.status == 201:
             raise NodeError(node, response.status, text)
-        print(f"Finishing creation on {node}")
+        logger.debug(f"Finishing group creation {group_name} on {node}")
         return response
 
     @staticmethod
     async def delete_group(node, group_name):
-        print(f"Deleting on {node}")
+        logger.debug(f"Deleting group {group_name} on {node}")
         async with aiohttp.ClientSession() as session:
             response = await session.delete(f"{node}/v1/group", json={"groupId": group_name})
             text = await response.text()
         if not response.status == 200:
             raise NodeError(node, response.status, text)
-        print(f"Deleting creation on {node}")
+        logger.debug(f"Finishing group deletion {group_name} on {node}")
         return response
 
     @staticmethod
     async def get_group(node, group_name):
-        print(f"Getting from {node}")
+        logger.debug(f"Getting group {group_name} from {node}")
         async with aiohttp.ClientSession() as session:
             response = await session.get(f"{node}/v1/group/{group_name}")
             text = await response.text()
@@ -137,5 +140,5 @@ class NodeClient():
             raise NodeGroupNotFound(node, response.status, text)
         elif not response.status == 200:
             raise NodeError(node, response.status, text)
-        print(f"Finishing getting from {node}")
+        logger.debug(f"Finishing getting group {group_name} from {node}")
         return response

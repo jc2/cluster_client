@@ -1,6 +1,11 @@
 import asyncio
+import logging
 
 from node import CreateGroup, DeleteGroup, NodeActionState
+
+
+logging.basicConfig(filename='script.log', format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class Coroutine():
@@ -14,6 +19,7 @@ class Coroutine():
         self.group = group
         class_ = self.actions.get(action)
         if not class_:
+            # TODO: Handle this exception in a better way
             raise Exception()
 
         # TODO: Implement a creational pattern
@@ -24,10 +30,9 @@ class Coroutine():
 
         # 1. Get status of all nodes
         status = loop.run_until_complete(self._get_status(self.tasks))
-        print(status)
         errors = [i for i in status if isinstance(i, Exception)]
         if errors:
-            print("Unable to get current status")
+            logger.error("Unable to get current status")
             return
 
         task_to_run = [task for task in self.tasks if task.status == NodeActionState.READY]
@@ -35,18 +40,24 @@ class Coroutine():
         # 2. Run the desired action
         if task_to_run:
             status = loop.run_until_complete(self._fordward(task_to_run))
-            print(status)
-            errors = [i for i in status if isinstance(i, Exception)]
+            errors = [str(i.last_attempt.exception()) for i in status if isinstance(i, Exception)]
             if errors:
-                print("Unable to make updates. Rolling back")
+                logger.error(errors)
+                logger.warning("Unable to perform updates. Rolling back")
 
                 task_to_rollback = [task for task in self.tasks if task.status == NodeActionState.DONE]
 
                 # 2.1 Rollback in case of errors
                 status = loop.run_until_complete(self._backward(task_to_rollback))
-                errors = [i for i in status if isinstance(i, Exception)]
+                errors = [str(i.last_attempt.exception()) for i in status if isinstance(i, Exception)]
+
                 if errors:
-                    print("Error, rolledback failed, manual check is needed")
+                    logger.error(errors)
+                    logger.critical("Error, Rollback failed, a manual check is needed")
+
+                logger.info("Rollback was successful")
+
+            logger.info("Done")
 
     async def _get_status(self, tasks):
         result = await asyncio.gather(
